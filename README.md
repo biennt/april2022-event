@@ -2,7 +2,7 @@
 ##This is a demo for nginx ingress controller with NAP (Nginx AppProtect)
 
 ### Install K8S on Ubuntu 20.04
-Follow this guide to have containerd, kubectl, kubelet, kubeadm on your k8s nodes
+Follow this guide to have container engine, kubectl, kubelet, kubeadm on your k8s nodes
 https://computingforgeeks.com/deploy-kubernetes-cluster-on-ubuntu-with-kubeadm/
 
 Init the cluster:
@@ -23,18 +23,18 @@ Install network interface:
 ```
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 ```
+### Building the container image for nginx plus
+(and optionally, with Nginx AppProtect and AppProtect DOS)
 ```
-rm -rf kubernetes-ingress
 git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.2.0
 cp nginx-repo.* kubernetes-ingress/
 cd kubernetes-ingress
-
-#build the container image
-make debian-image-nap-dos-plus PREFIX=gitlab.bienlab.com:5005/bien/kic/nginx-plus-ingress TARGET=download DOCKER_BUILD_OPTIONS="--pull --no-cache" 
-make push PREFIX=gitlab.bienlab.com:5005/bien/kic/nginx-plus-ingress
-
-
-#### configs
+make debian-image-nap-dos-plus PREFIX=your.private.registry/nginx-plus-ingress TARGET=download DOCKER_BUILD_OPTIONS="--pull --no-cache" 
+make push PREFIX=your.private.registry/nginx-plus-ingress
+```
+### Installation of nginx ingress controller on your k8s
+you need to install/apply some other configs such as namespace, service account, rbac, default secret, crds..
+```
 cd deployments
 kubectl apply -f common/ns-and-sa.yaml
 kubectl apply -f rbac/rbac.yaml
@@ -56,37 +56,35 @@ kubectl apply -f common/crds/appprotectdos.f5.com_apdospolicy.yaml
 kubectl apply -f common/crds/appprotectdos.f5.com_dosprotectedresources.yaml
 kubectl apply -f deployment/appprotect-dos-arb.yaml
 kubectl apply -f service/appprotect-dos-arb-svc.yaml
-
-
-# create image pull secret
-kubectl create secret docker-registry regcred --docker-server=gitlab.bienlab.com:5005 --docker-username=bien --docker-password='abc123$'
-
-
-imagePullSecrets:
-- name: regcred
-
-
-# change the image repo in this file
-vi daemon-set/nginx-plus-ingress.yaml
-
-# Modify
-- image: gitlab.bienlab.com:5005/bien/kic/nginx-plus-ingress:2.2.0-SNAPSHOT-72602e1
-
-# add 
-imagePullSecrets:
-- name: regcred
-# modify
--enable-app-protect
---enable-app-protect-dos
-
-
-kubectl apply -f daemon-set/nginx-plus-ingress.yaml
-
-
-#run the example
-kubectl run -it mycurl --image=curlimages/curl --restart=Never -- sh
-
-
-
-
 ```
+If your private registry requires authentication, you need to create a secret so k8s know how to authenticate while it downloads the image:
+```
+kubectl create secret docker-registry regcred --docker-server=gitlab.bienlab.com:5005 --docker-username=bien --docker-password='abc123$'
+```
+Edit the deployment file (in this case, i use daemonsets, so the file is daemon-set/nginx-plus-ingress.yaml)
+```
+add:
+```
+imagePullSecrets:
+- name: regcred
+```
+change the image repo in this file
+```
+- image: your.private.registry/nginx-plus-ingress:<tag>
+```
+You may want to enable AppProtect and AppProtect DOS
+```
+-enable-app-protect
+-enable-app-protect-dos
+```
+Finally, apply the yaml:
+```
+kubectl apply -f daemon-set/nginx-plus-ingress.yaml
+```
+### Run the examples
+Once you have the ingress controller installed, you can go with examples from here: https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples
+  - basic: https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/complete-example 
+  - with AppProtect: https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/appprotect
+  
+ Enjoy!
+ 
