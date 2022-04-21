@@ -77,10 +77,12 @@ You may want to enable AppProtect and AppProtect DOS
 -enable-app-protect
 -enable-app-protect-dos
 ```
+
 Finally, apply the yaml:
 ```
 kubectl apply -f daemon-set/nginx-plus-ingress.yaml
 ```
+  
 ### Run the examples
 Once you have the ingress controller installed, you can go with examples from here: https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples
   - basic: https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/complete-example 
