@@ -1,36 +1,29 @@
 # april2022-event
+##This is a demo for nginx ingress controller with NAP (Nginx AppProtect)
+
+### Install K8S on Ubuntu 20.04
+Follow this guide to have containerd, kubectl, kubelet, kubeadm on your k8s nodes
+https://computingforgeeks.com/deploy-kubernetes-cluster-on-ubuntu-with-kubeadm/
+
+Init the cluster:
 ```
-
-
-### RESET KUBERNETES, all nodes
-sudo kubeadm reset
-
-sudo kubeadm join 10.0.0.191:6443 --token 5ddzah.wad8tm815jbt8zmn --discovery-token-ca-cert-hash sha256:5f637ff4b5db8b1aeef7c4726b78110f265353a064ba252363df32e3312e44c7
-####
-sudo tee kubeadm.conf<<EOF
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: ClusterConfiguration
-apiServer:
-  extraArgs:
-    service-account-signing-key-file: /etc/kubernetes/pki/sa.key
-    service-account-issuer: api
-    service-account-api-audiences: api
-
-EOF
-
 sudo kubeadm init --config kubeadm.conf
-
+```
+Get the config file ready for kubectl and/or other k8s client such as k9s, lens..
+```
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-
+```
+Join other worker nodes by the command provided by the above kubeadm init, example:
+```
 sudo kubeadm join 10.0.0.191:6443 --token rqm836.wmiw7pw2pm0mi5ul --discovery-token-ca-cert-hash sha256:00cff16199ea4c9bbed562499fe41e81d0c5346206be39938624fdcffb768476
-
+```
+Install network interface:
+```
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-
-
-
+```
+```
 rm -rf kubernetes-ingress
 git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.2.0
 cp nginx-repo.* kubernetes-ingress/
