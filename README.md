@@ -63,8 +63,6 @@ kubectl create secret docker-registry regcred --docker-server=gitlab.bienlab.com
 ```
 Edit the deployment file (in this case, i use daemonsets, so the file is daemon-set/nginx-plus-ingress.yaml)
 ```
-add:
-```
 imagePullSecrets:
 - name: regcred
 ```
